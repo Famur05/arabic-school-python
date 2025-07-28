@@ -1,0 +1,11 @@
+from authx import AuthX, AuthXConfig
+from config.settings import settings
+
+config = AuthXConfig()
+config.JWT_SECRET_KEY = settings.JWT_SECRET_KEY
+config.JWT_ALGORITHM = settings.JWT_ALGORITHM
+config.JWT_ACCESS_TOKEN_EXPIRES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+config.JWT_ACCESS_COOKIE_NAME = "access_token"
+config.JWT_TOKEN_LOCATION = ["cookies"]
+
+auth = AuthX(config=config)

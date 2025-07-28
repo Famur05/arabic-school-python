@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException
-from schemas.user import UserAddDTO
+from schemas.user import UserAddDTO, UserLoginDTO
 from queries import user as user_crud
 from datasources.database import SessionDep
+from fastapi import Depends
+from config.auth import auth
 
 router = APIRouter()
 
@@ -30,6 +32,18 @@ async def get_user_by_id(user_id: int, session: SessionDep):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User found", "user_id": user.id, "user_name": user.name}
+
+
+# @router.get("/me", summary="Get current user")
+# async def get_me(user=Depends(auth.get_current_user)):
+#     return {"message": "Authenticated!", "user": user}
+
+@router.post("/login", summary="Login a user")
+async def login(credentials: UserLoginDTO, session: SessionDep):
+    user = await user_crud.get_user_by_email_and_password(credentials, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"message": "User logged in successfully", "user_id": user.id, "user_name": user.name}
 
 
 @router.delete("/{user_id}", summary="Delete user by id")

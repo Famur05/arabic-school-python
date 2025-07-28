@@ -19,3 +19,7 @@ class UserInfoAddDTO(BaseModel):
 class UserInfoDTO(UserInfoAddDTO):
     id: int         
     created_at: datetime
+
+class UserLoginDTO(BaseModel):
+    email: EmailStr
+    password: str

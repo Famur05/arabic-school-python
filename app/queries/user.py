@@ -1,12 +1,13 @@
 from sqlalchemy import text, insert, select
 from datasources.database import async_engine, async_session_maker, Base
 from models.user import UserModel, UserInfoModel, Subscription, LanguageLevel
-from schemas.user import UserDTO, UserAddDTO
+from schemas.user import UserAddDTO, UserLoginDTO
 from datasources.database import SessionDep
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Для проверки пароля используйте: pwd_context.verify(plain_password, hashed_password)
+
 
 async def create_tables():
     async with async_engine.begin() as conn:
@@ -20,7 +21,7 @@ async def create_user(new_user: UserAddDTO, session: SessionDep):
     user = UserModel(
         name=new_user.name,
         email=new_user.email,
-        hashed_password=pwd_context.hash(new_user.password)
+        hashed_password=pwd_context.hash(new_user.password),
     )
     session.add(user)
     await session.flush()  # Теперь у user.id есть значения
@@ -46,14 +47,24 @@ async def get_user_by_id(user_id: int, session: SessionDep):
     return user
 
 
+async def get_user_by_email_and_password(credentials: UserLoginDTO, session: SessionDep):
+    res = await session.execute(select(UserModel).where(UserModel.email == credentials.email))
+    user = res.scalar_one_or_none()
+    if not user:
+        return None
+    if not pwd_context.verify(credentials.password, user.hashed_password):
+        return None
+    return user
+
+
 async def delete_user(user: UserModel, session: SessionDep):
-    # await session.flush()
     await session.delete(user)
     await session.commit()
 
 
 # ---------------------------------
 
+# Декларативная версия
 
 # async def get_data():
 #     async with async_session_maker() as session:
