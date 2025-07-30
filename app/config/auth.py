@@ -1,6 +1,6 @@
 from datetime import timedelta
 from authx import AuthX, AuthXConfig
-from config.settings import settings
+from app.config.settings import settings
 
 config = AuthXConfig()
 config.JWT_SECRET_KEY = settings.JWT_SECRET_KEY

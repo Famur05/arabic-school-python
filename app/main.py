@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from authx.exceptions import MissingTokenError, JWTDecodeError
-from routers import user, root
-import uvicorn
+from app.routers import router
+# import uvicorn
+# import sys
+
+# sys.path.insert(1, sys.path[0] + "/..")
 
 app = FastAPI()
 
@@ -21,8 +24,7 @@ async def jwt_decode_error_handler(request: Request, exc: JWTDecodeError):
         content={"detail": "Invalid or expired token."}
     )
 
-app.include_router(root.router, tags=["Root"])
-app.include_router(user.router, prefix="/users", tags=["Users"])
+app.include_router(router)
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+# if __name__ == "__main__":
+#     uvicorn.run("app.main:app", reload=True)

@@ -1,8 +1,8 @@
 from sqlalchemy import text, insert, select
-from datasources.database import async_engine, async_session_maker, Base
-from models.user import UserModel, UserInfoModel, Subscription, LanguageLevel
-from schemas.user import UserAddDTO, UserLoginDTO
-from datasources.database import SessionDep
+from app.datasources.database import async_engine, async_session_maker, Base
+from app.models.user import UserModel, UserInfoModel, Subscription, LanguageLevel
+from app.schemas.user import UserAddDTO, UserDTO, UserLoginDTO
+from app.datasources.database import SessionDep
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -38,7 +38,8 @@ async def create_user(new_user: UserAddDTO, session: SessionDep):
 async def get_all_users(session: SessionDep):
     res = await session.execute(select(UserModel))
     users = res.scalars().all()
-    return users
+    users_schemas = [UserDTO(id=user.id, name=user.name, email=user.email, password=user.hashed_password) for user in users]
+    return users_schemas
 
 
 async def get_user_by_id(user_id: int, session: SessionDep):

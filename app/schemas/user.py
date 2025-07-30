@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from models.user import Subscription
-from models.user import LanguageLevel
+from app.models.user import Subscription
+from app.models.user import LanguageLevel
 
 class UserAddDTO(BaseModel):
     name: str
