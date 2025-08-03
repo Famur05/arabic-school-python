@@ -22,10 +22,12 @@ class Subscription(enum.Enum):
     PRO = "pro"
     PREMIUM = "premium"
 
+
 class LanguageLevel(enum.Enum):
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
+
 
 class UserInfoModel(Base):
     __tablename__ = "user_info"
@@ -35,14 +37,3 @@ class UserInfoModel(Base):
     language_level: Mapped[LanguageLevel]
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.now)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-
-
-# Императивный метод создания таблицы
-# metadata = MetaData()
-
-# users_table = Table(
-#     "users",
-#     metadata,
-#     Column("id", Integer, primary_key=True),
-#     Column("name", String(255), nullable=False),
-# )
