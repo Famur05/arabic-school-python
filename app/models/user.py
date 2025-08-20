@@ -16,6 +16,9 @@ class UserModel(Base):
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
 
+class AccessRole(enum.Enum):
+    USER = "user"
+    ADMIN = "admin"
 
 class Subscription(enum.Enum):
     FREE = "free"
@@ -33,6 +36,7 @@ class UserInfoModel(Base):
     __tablename__ = "user_info"
 
     id: Mapped[intpk]
+    access_role: Mapped[AccessRole]
     subscription: Mapped[Subscription]
     language_level: Mapped[LanguageLevel]
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.now)

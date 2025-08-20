@@ -1,26 +1,22 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.user import UserModel, UserInfoModel, Subscription, LanguageLevel
+from app.models.user import UserModel, UserInfoModel, AccessRole, Subscription, LanguageLevel
 from app.schemas.user import UserAddDTO, UserLoginDTO
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, user_data: UserAddDTO) -> UserModel:
+    async def create(self, new_user: UserAddDTO, hashed_password: str) -> UserModel:
         user = UserModel(
-            name=user_data.name,
-            email=user_data.email,
-            hashed_password=pwd_context.hash(user_data.password),
+            name=new_user.name, email=new_user.email, hashed_password=hashed_password
         )
         self.session.add(user)
         await self.session.flush()
         user_info = UserInfoModel(
+            access_role=AccessRole.USER,
             subscription=Subscription.FREE,
             language_level=LanguageLevel.BEGINNER,
             user_id=user.id,
@@ -38,21 +34,19 @@ class UserRepository:
         result = await self.session.execute(
             select(UserModel).where(UserModel.id == user_id)
         )
-        user = result.scalar_one_or_none()
-        return user
+        return result.scalar_one_or_none()
 
-    async def get_by_email_and_password(
-        self, credentials: UserLoginDTO
-    ) -> Optional[UserModel]:
+    async def get_user_info_by_user_id(self, user_id: int) -> Optional[UserInfoModel]:
         result = await self.session.execute(
-            select(UserModel).where(UserModel.email == credentials.email)
+            select(UserInfoModel).where(UserInfoModel.user_id == user_id)
         )
-        user = result.scalar_one_or_none()
-        if not user:
-            return None
-        if not pwd_context.verify(credentials.password, user.hashed_password):
-            return None
-        return user
+        return result.scalar_one_or_none()
+
+    async def get_by_email(self, email: str) -> Optional[UserModel]:
+        result = await self.session.execute(
+            select(UserModel).where(UserModel.email == email)
+        )
+        return result.scalar_one_or_none()
 
     async def delete(self, user: UserModel) -> None:
         await self.session.delete(user)

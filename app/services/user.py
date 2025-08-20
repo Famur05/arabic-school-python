@@ -1,10 +1,11 @@
-from typing import Optional
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.user import UserAddDTO, UserLoginDTO, UserDTO
 from app.repositories.user import UserRepository
 from app.config.auth import auth, config
-from fastapi import Response
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserService:
@@ -12,7 +13,8 @@ class UserService:
         self.user_repository = UserRepository(session)
 
     async def create(self, new_user: UserAddDTO) -> dict[str, str | int]:
-        user = await self.user_repository.create(new_user)
+        hashed_password = pwd_context.hash(new_user.password)
+        user = await self.user_repository.create(new_user, hashed_password)
         return {
             "message": "User created successfully",
             "user_id": user.id,
@@ -27,8 +29,7 @@ class UserService:
             UserDTO(
                 id=user.id,
                 name=user.name,
-                email=user.email,
-                password=user.hashed_password,
+                email=user.email
             )
             for user in users
         ]
@@ -41,17 +42,22 @@ class UserService:
             id=user.id,
             name=user.name,
             email=user.email,
-            password=user.hashed_password,
         )
 
     async def login(
         self, credentials: UserLoginDTO, response: Response
     ) -> dict[str, str | int]:
-        user = await self.user_repository.get_by_email_and_password(credentials)
-        if not user:
+        user = await self.user_repository.get_by_email(credentials.email)
+        if not user or not pwd_context.verify(
+            credentials.password, user.hashed_password
+        ):
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        token = auth.create_access_token(str(user.id))
+        user_info = await self.user_repository.get_user_info_by_user_id(user.id)
+        role = user_info.access_role.value
+
+        token = auth.create_access_token(str(user.id), data={"role": role})
+
         response.set_cookie(
             key=config.JWT_ACCESS_COOKIE_NAME,
             value=token,
@@ -63,6 +69,7 @@ class UserService:
             "message": "User logged in successfully",
             "user_id": user.id,
             "user_name": user.name,
+            "role": role,
             "token": token,
         }
 
