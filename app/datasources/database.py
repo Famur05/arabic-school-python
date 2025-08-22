@@ -5,7 +5,7 @@ from fastapi import Depends
 from app.config.settings import settings
 
 async_engine = create_async_engine(
-    url=settings.DATABASE_URL_asyncpg,
+    url=settings.DATABASE_URL,
     echo=True,
     # pool_size=5,
     # max_overflow=10,
