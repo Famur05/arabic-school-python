@@ -4,4 +4,4 @@ router = APIRouter()
 
 @router.get("/")
 async def root():
-    return {"message": "This is an Arabic school!!"}
+    return {"message": "This is an Arabic school!"}
