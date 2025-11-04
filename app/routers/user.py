@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 from app.schemas.user import UserAddDTO, UserLoginDTO, UserDTO
@@ -14,17 +14,18 @@ router = APIRouter()
 def get_user_service(session: SessionDep) -> UserService:
     return UserService(session)
 
+ServiceDep = Annotated[UserService, Depends(get_user_service)]
 
 @router.post("/", summary="Create a new user")
 async def create(
-    new_user: UserAddDTO, user_service: UserService = Depends(get_user_service)
+    new_user: UserAddDTO, user_service: ServiceDep
 ) -> dict[str, str | int]:
     return await user_service.create(new_user)
 
 
 @router.get("/", summary="Get all users 🔒", dependencies=[Depends(admin_required)])
 async def get_all(
-    user_service: UserService = Depends(get_user_service),
+    user_service: ServiceDep
 ) -> list[UserDTO]:
     return await user_service.get_all()
 
@@ -33,7 +34,7 @@ async def get_all(
 async def login(
     credentials: UserLoginDTO,
     response: Response,
-    user_service: UserService = Depends(get_user_service),
+    user_service: ServiceDep
 ) -> dict[str, str | int]:
     return await user_service.login(credentials, response)
 
@@ -58,7 +59,7 @@ async def logout(response: Response) -> dict[str, str]:
 @router.get("/{user_id}", summary="Get user by id 🔒", dependencies=[Depends(admin_required)])
 async def get_by_id(
     user_id: int,
-    user_service: UserService = Depends(get_user_service),
+    user_service: ServiceDep
 ) -> UserDTO:
     return await user_service.get_by_id(user_id)
 
@@ -66,6 +67,6 @@ async def get_by_id(
 @router.delete("/{user_id}", summary="Delete user by id 🔒", dependencies=[Depends(admin_required)])
 async def delete(
     user_id: int,
-    user_service: UserService = Depends(get_user_service),
+    user_service: ServiceDep
 ) -> dict[str, str | int]:
     return await user_service.delete(user_id)
